@@ -1,17 +1,18 @@
-import { EntityRepository, Repository } from 'typeorm';
-
+import { EntityRepository, Repository, getRepository } from 'typeorm';
+import ReduceBalanceService from '../services/ReduceBalanceService';
+import Balance from '../models/Balance';
 import Transaction from '../models/Transaction';
-
-interface Balance {
-  income: number;
-  outcome: number;
-  total: number;
-}
 
 @EntityRepository(Transaction)
 class TransactionsRepository extends Repository<Transaction> {
   public async getBalance(): Promise<Balance> {
-    // TODO
+    const transactionRepository = getRepository(Transaction);
+    const allTransactions = await transactionRepository.find();
+    const reduceBalanceService = new ReduceBalanceService(allTransactions);
+    const income = reduceBalanceService.execute('income');
+    const outcome = reduceBalanceService.execute('outcome');
+    const balance = new Balance({ income, outcome });
+    return balance;
   }
 }
 
